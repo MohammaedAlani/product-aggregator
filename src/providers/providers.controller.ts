@@ -1,4 +1,3 @@
-// src/providers/providers.controller.ts
 import { Controller, Get } from '@nestjs/common';
 import { Provider1Service } from './provider1.service';
 import { Provider2Service } from './provider2.service';

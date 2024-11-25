@@ -1,14 +1,16 @@
-import { Controller, Sse, MessageEvent } from '@nestjs/common';
+import { Controller, Sse } from '@nestjs/common';
 import { Observable, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ProductsService } from './products.service';
+import { ApiExcludeController } from '@nestjs/swagger';
 
+@ApiExcludeController()
 @Controller('products')
 export class ProductsSSEController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Sse('sse')
-  async sse(): Promise<Observable<Promise<MessageEvent>>> {
+  sse(): Observable<Promise<{ data: string; id: string; type: string }>> {
     return interval(5000).pipe(
       map(async () => {
         const products = await this.productsService.findAll({
@@ -16,11 +18,10 @@ export class ProductsSSEController {
         });
 
         return {
-          data: JSON.stringify(products),
+          data: JSON.stringify(products.data),
           type: 'message',
           id: new Date().getTime().toString(),
-          retry: 5000,
-        } as MessageEvent;
+        };
       }),
     );
   }

@@ -46,7 +46,7 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    return this.prisma.product.findUnique({
+    return this.prisma.product.findFirstOrThrow({
       where: { id },
       include: { priceHistory: true },
     });

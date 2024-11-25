@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <title>Product Price Updates</title>
   <style>
@@ -15,6 +15,20 @@
       .price-down {
           color: red;
       }
+      .status-badge {
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: bold;
+      }
+      .available {
+          background-color: #e7f4e8;
+          color: green;
+      }
+      .unavailable {
+          background-color: #fee7e7;
+          color: red;
+      }
   </style>
 </head>
 <body>
@@ -26,28 +40,44 @@
   const evtSource = new EventSource('/products/sse');
   const productsDiv = document.getElementById('products');
 
+  function updateProducts(products) {
+    productsDiv.innerHTML = products.map(product => {
+      const priceChange = previousPrices[product.id]
+        ? (product.price > previousPrices[product.id] ? 'price-up' :
+          product.price < previousPrices[product.id] ? 'price-down' : '')
+        : '';
+
+      previousPrices[product.id] = product.price;
+
+      return `
+                    <div class="product">
+                        <h3>${product.name}</h3>
+                        <p class="${priceChange}">
+                            Price: ${product.price.toFixed(2)} ${product.currency}
+                            ${priceChange === 'price-up' ? '↑' : priceChange === 'price-down' ? '↓' : ''}
+                        </p>
+                        <p>
+                            Status:
+                            <span class="status-badge ${product.availability ? 'available' : 'unavailable'}">
+                                ${product.availability ? 'Available' : 'Out of Stock'}
+                            </span>
+                        </p>
+                        <p>Provider: ${product.provider}</p>
+                        <p>Last Updated: ${new Date(product.lastUpdated).toLocaleString()}</p>
+                        ${product.category ? `<p>Category: ${product.category}</p>` : ''}
+                        ${product.specifications && product.specifications.length > 0
+        ? `<p>Specifications: ${product.specifications.join(', ')}</p>`
+        : ''
+      }
+                    </div>
+                `;
+    }).join('');
+  }
+
   evtSource.onmessage = function(event) {
     try {
       const response = JSON.parse(event.data);
-      const products = response.data;
-
-      productsDiv.innerHTML = products.map(product => {
-        const priceChange = previousPrices[product.id]
-          ? (product.price > previousPrices[product.id] ? 'price-up' :
-            product.price < previousPrices[product.id] ? 'price-down' : '')
-          : '';
-
-        previousPrices[product.id] = product.price;
-
-        return `
-                        <div class="product">
-                            <h3>${product.name}</h3>
-                            <p class="${priceChange}">Price: ${product.price.toFixed(2)} ${product.currency}</p>
-                            <p>Available: ${product.availability ? 'Yes' : 'No'}</p>
-                            <p>Last Updated: ${new Date(product.lastUpdated).toLocaleString()}</p>
-                        </div>
-                    `;
-      }).join('');
+      updateProducts(response);
     } catch (error) {
       console.error('Error parsing SSE data:', error);
     }
