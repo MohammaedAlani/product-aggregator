@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Product Price Updates</title>
+  <style>
+      .product {
+          border: 1px solid #ddd;
+          padding: 10px;
+          margin: 10px;
+          border-radius: 5px;
+      }
+      .price-up {
+          color: green;
+      }
+      .price-down {
+          color: red;
+      }
+  </style>
+</head>
+<body>
+<h1>Real-time Product Updates</h1>
+<div id="products"></div>
+
+<script>
+  let previousPrices = {};
+  const evtSource = new EventSource('/products/sse');
+  const productsDiv = document.getElementById('products');
+
+  evtSource.onmessage = function(event) {
+    try {
+      const response = JSON.parse(event.data);
+      const products = response.data;
+
+      productsDiv.innerHTML = products.map(product => {
+        const priceChange = previousPrices[product.id]
+          ? (product.price > previousPrices[product.id] ? 'price-up' :
+            product.price < previousPrices[product.id] ? 'price-down' : '')
+          : '';
+
+        previousPrices[product.id] = product.price;
+
+        return `
+                        <div class="product">
+                            <h3>${product.name}</h3>
+                            <p class="${priceChange}">Price: ${product.price.toFixed(2)} ${product.currency}</p>
+                            <p>Available: ${product.availability ? 'Yes' : 'No'}</p>
+                            <p>Last Updated: ${new Date(product.lastUpdated).toLocaleString()}</p>
+                        </div>
+                    `;
+      }).join('');
+    } catch (error) {
+      console.error('Error parsing SSE data:', error);
+    }
+  };
+
+  evtSource.onerror = function(error) {
+    console.error('SSE Error:', error);
+  };
+</script>
+</body>
+</html>
