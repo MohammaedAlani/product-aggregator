@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { AuthModule } from './auth/auth.module';
+import { ProvidersModule } from './providers/providers.module';
 import { ProductsModule } from './products/products.module';
 import { PrismaService } from './prisma.service';
-import { Provider1Service } from './providers/provider1.service';
-import { Provider2Service } from './providers/provider2.service';
 import { AggregatorService } from './aggregator/aggregator.service';
 
 @Module({
@@ -15,17 +13,13 @@ import { AggregatorService } from './aggregator/aggregator.service';
     }),
     ThrottlerModule.forRoot([
       {
-      ttl: 60,
-      limit: 10,
-    }]),
-    AuthModule,
+        ttl: 60,
+        limit: 10,
+      },
+    ]),
+    ProvidersModule,
     ProductsModule,
   ],
-  providers: [
-    PrismaService,
-    Provider1Service,
-    Provider2Service,
-    AggregatorService,
-  ],
+  providers: [PrismaService, AggregatorService],
 })
 export class AppModule {}
